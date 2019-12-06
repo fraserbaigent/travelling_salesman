@@ -29,7 +29,7 @@ def simulated_annealing(d_old, d_new, *args, beta, **kwargs):
         # Do first check to save computation of the log term. Auto accept
         # good guesses
         return True
-    elif -beta * dr >= np.log(random.random()):
+    elif np.exp(-beta * dr) >= random.random():
         # Log term prevents overflow from giant exponent (value
         # range is [-infty,0))
         return True
@@ -73,8 +73,9 @@ def get_b0(c_l, l_t, p_0,  **kwargs):
         p.append(l_t[tuple(random.sample(c_l, k=2))])
     return -np.log(p_0) /  np.mean(p)
 
-def optimise_route(r_l, *args,
-                   n_bet,f_max, b_x,f_loc, n_t,**kwargs):
+def optimise_route(*params, r_l):
+    
+    n_bet,f_max, b_x,f_loc, n_t = params
     j = 1
     d_l = list() # list of distances
     r_l, l_tab = gen_lookup(r_l)
@@ -130,14 +131,23 @@ def optimise_route(r_l, *args,
                 break
         d_l.append(d)
         if j > n_t:
-            return t_l, d_l
+            return [r_l[p] for p in t_l], d_l
 
+
+def tsp_solver(city_list, *args):
+    '''
+    This function will return the distance for the 5 args, and 
+    may be used for optimisation of the parameter sets
+    '''
+    result = scipy.optimise.minimise(optimise_route(*args, args=(city_list), method="Powell"))
+    return params
+        
 inputs = {'p_0'   : 0.9,  # Initial probability used for beta
-          'b_x'   : 1.1,  # Beta scale with every outer loop
-          'f_max' : 10000, # How many fails before beta reduced
+          'b_x'   : 1.05,  # Beta scale with every outer loop
+          'f_max' : 2000, # How many fails before beta reduced
           'f_loc' : 500,  # Fail counter for return to globmin
           'n_bet' : 25,   # Number of beta multiplies
-          'n_t'   : 3}    # Total number of iterations of script
+          'n_t'   : 500}    # Total number of iterations of script
 cities, d, d_l = solve_tsp('cities.txt', **inputs)
 
 print(f'Total distance = {d:.03f}')
@@ -148,11 +158,11 @@ cities.append(cities[0])
 plt.plot(*zip(*cities))
 plt.grid(True)
 t = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-plt.savefig(f'travelling_salesman.pdf')
+plt.savefig(f'{t}-travelling_salesman.pdf')
 plt.figure(123)
-n,bins, _ =plt.hist(d_l, 30)
+n,bins, _ =plt.hist(d_l, 20)
 plt.figure(2)
 bin_width = bins[1] - bins[0]
-print(n,bins)
 plt.plot([b + bin_width for b in bins[:-1]], n, 'o')
 plt.savefig(f'{t}-dist_of_guesses.pdf')
+
