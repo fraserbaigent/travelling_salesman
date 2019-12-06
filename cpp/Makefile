@@ -17,7 +17,7 @@ clean:
 
 TSP = travelling_salesman.o city.o
 
-flipper : $(TSP)
-		$(CXX) -o $@ $(CFLAGS) $(TSP) $(LIB) $(LIB_OPTIONS)
+travelling_salesman : $(TSP)
+	$(CXX) -o $@ $(CFLAGS) $(TSP) $(LIB) $(LIB_OPTIONS)
 ################################################################################
 ################################################################################
