@@ -15,7 +15,7 @@ clean:
 ################################################################################
 ################################################################################
 
-TSP = travelling_salesman.o city.o
+TSP = travelling_salesman.o solver.o city.o
 
 travelling_salesman : $(TSP)
 	$(CXX) -o $@ $(CFLAGS) $(TSP) $(LIB) $(LIB_OPTIONS)

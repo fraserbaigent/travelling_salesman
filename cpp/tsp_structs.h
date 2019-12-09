@@ -2,9 +2,10 @@
 #define STRUCTS_HEADER
 
 #include "city.h"
-
 #include <iostream>
 #include <vector>
+
+typedef std::vector<std::vector<float>> LUTab;
 
 struct City_Data{
   std::vector<int> city_ids;
@@ -16,4 +17,10 @@ struct Point{
   float x_1;
 };
 
+struct Kwargs{
+  double beta;
+  double beta_x;
+  long int n_outer;
+  long int n_inner;
+};
 #endif
