@@ -17,13 +17,13 @@ Solver::Solver(City_Data *city_data,
 	       LUTab *l_tab,
 	       Kwargs *kwargs_input) {
   //assign pointers and get number of cities
-  c_dat = new City_Data(*city_data);
-  kwargs = new Kwargs(*kwargs_input);
-  lookup_table = new LUTab(*l_tab);
+  c_dat = city_data;
+  kwargs = kwargs_input;
+  lookup_table = l_tab;
   n_cities = (*city_data).city_ids.size();
 
   //initialise rng dist with number of cities
-  decltype(el_dist.param()) rng_cits (0, n_cities);
+  decltype(el_dist.param()) rng_cits (0, n_cities-1);
   el_dist.param(rng_cits);
   //initialise d with the highest possible journey length
   double d_test;
@@ -40,12 +40,7 @@ Solver::Solver(City_Data *city_data,
   };
 };
 
-Solver::~Solver() {
-  // Delete the pointers
-  delete c_dat;
-  delete kwargs;
-  delete lookup_table;
-};
+Solver::~Solver() {};
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +48,14 @@ Solver::~Solver() {
 
 void Solver::set_rng_seed(const int input){
   gen.seed(input);
+};
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//getters
+
+double Solver::get_d() const {
+  return d_opt;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -74,17 +77,7 @@ void Solver::swap_cities(const int n_swaps) {
       rn[1] = el_dist(gen);
     }
     while (rn[0] == rn[1]);
-    //test_e[0] = test_list[rn[0]];
-    //test_e[1] = test_list[rn[1]];
-    //test_list[rn[1]] = test_e[0];
-    //test_list[rn[0]] = test_e[1];
-    if (test_list[rn[0]] == test_list[rn[1]]){
-      std::cout<<"They are the same before\n";
-      std::cout<< rn[0] << " "<<rn[1]<< " "<< test_list[rn[0]] <<" "<< test_list[rn[1]] << "\n";};
     std::swap(test_list[rn[0]], test_list[rn[1]]);
-    if (test_list[rn[0]] == test_list[rn[1]]){
-      std::cout<<"They are the same after\n";
-      exit(1);};
   };
 };
 
@@ -93,40 +86,41 @@ void Solver::swap_cities(const int n_swaps) {
 void Solver::load_vectors(std::vector<int> *source,
 			  std::vector<int> *destin){  
   for (int c_l = 0 ; c_l < n_cities; ++c_l) {
-    std::cout<< c_l<<" " << (*destin)[c_l] << " "<< (*source)[c_l] <<"\n";
     (*destin)[c_l] = (*source)[c_l];
   };
-  std::cout<<"\n";
 };
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //primary optimiser
 void Solver::optimise() {
-  int i=0,j=0;
+  int i=0,j;
   beta= kwargs->beta;
   do {
+    j = 0;
     do {
-      swap_cities(1);
+      swap_cities(2);
       calculate_d();
-      std::cout << i << " " << j << "\n";
       if (d_new <= d_opt) {
-	//load_vectors(&test_list, &((*c_dat).city_ids));
+	load_vectors(&test_list, &(c_dat->city_ids));
 	d_opt = d_new;
       }
       else if ( log ( qa_dist(gen)) <= (- beta * (d_new - d_opt) ) ){
       	d_opt = d_new;
+      }
+      else{
+      	load_vectors(&(c_dat->city_ids) ,&test_list);
       };
-      //else{
-      	//load_vectors(&((*c_dat).city_ids) ,&test_list);
-	
-      //};
       ++j;}
     while (j < kwargs->n_inner);
-    beta *= kwargs -> beta_x;
+    beta *= kwargs->beta_x;
     ++i;
-    load_vectors(&((*c_dat).city_ids) ,&test_list);
+    load_vectors(&(c_dat->city_ids) ,&test_list);
     calculate_d();
-    d_opt = d_new;
   }
   while (i < kwargs->n_outer);
+  for (uint i = 0 ; i < (c_dat->city_ids).size(); i++){
+    std::cout<< (c_dat->city_ids)[i]<<"\n";};
+  std::cout<< c_dat<<"\n";
+  std::cout<<"\n";
+  
 }; 

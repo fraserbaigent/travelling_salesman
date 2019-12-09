@@ -19,6 +19,8 @@ class Solver {
   void calculate_d();
   //setters
   void set_rng_seed(const int);
+  //getters
+  double get_d() const;
  private:
   static std::mt19937 gen;
   static std::uniform_int_distribution<int> el_dist;

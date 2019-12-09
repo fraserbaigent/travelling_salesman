@@ -77,18 +77,20 @@ int main(){
   l_t = gen_lookup_table(&c_d);
   // Run optimiser for TSP
   Kwargs kwargs;
-  kwargs.beta = 1.0;
+  kwargs.beta = 0.01;
   kwargs.beta_x = 1.5;
-  kwargs.n_outer = 1;
-  kwargs.n_inner = 10000;
+  kwargs.n_outer = 50;
+  kwargs.n_inner = 20000;
   Solver solver(&c_d, &l_t, &kwargs);
   solver.optimise();
-  
-  //for (int i = 0 ; i < n_cities; i++){
+  std::cout<< solver.get_d() <<"\n";
+  std::cout<< &c_d<<"\n";
+  for (uint i = 0 ; i < c_d.city_ids.size(); i++){
+    std::cout << c_d.city_ids[i]<<"\n";
   //  for (int j = 0 ; j < n_cities; j++){
   //    std::cout << l_t[i][j]<< " ";
   //  };
   //  std::cout<<"\n";
-  //};
+  };
   return 0;
 }
