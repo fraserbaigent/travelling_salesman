@@ -7,7 +7,7 @@
 #include "tsp_structs.h"
 #include "city.h"
 #include "solver.h"
-
+#include "rng.h"
 
 std::vector<Point> cit_list(std::string filename) {
   std::vector<Point> x;
@@ -82,6 +82,7 @@ int main(){
   kwargs.n_outer = 50;
   kwargs.n_inner = 20000;
   Solver solver(&c_d, &l_t, &kwargs);
+  solver.set_rng_seed(rdtsc());
   solver.optimise();
   std::cout<< solver.get_d() <<"\n";
   std::cout<< &c_d<<"\n";
