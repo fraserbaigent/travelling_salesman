@@ -3,7 +3,6 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
-#include <chrono>
 #include "tsp_structs.h"
 #include "city.h"
 #include "solver.h"
