@@ -20,24 +20,17 @@ Solver::Solver(City_Data *city_data,
   c_dat = city_data;
   kwargs = kwargs_input;
   lookup_table = l_tab;
-  n_cities = (*city_data).city_ids.size();
-
+  n_cities = (city_data->city_ids).size();
+  //Load test city list
+  for (std::vector<int>::iterator it = (c_dat->city_ids).begin() ;
+       it != (c_dat->city_ids).end(); ++it) {
+    test_list.push_back((c_dat->city_ids)[*it]);
+  };
   //initialise rng dist with number of cities
   decltype(el_dist.param()) rng_cits (0, n_cities-1);
   el_dist.param(rng_cits);
   //initialise d with the highest possible journey length
-  double d_test;
-  d_test = n_cities * (*lookup_table)[0][0];
-  d_opt = d_test;
-  for (int i = 0 ; i < n_cities; i++){
-    test_list.push_back((*c_dat).city_ids[i]);
-    for (int j = i ; j < n_cities; j++) {
-      d_test = n_cities * (*lookup_table)[i][j];
-      if (d_test > d_opt){
-	d_opt = d_test;
-      };
-    };
-  };
+  init_d();
 };
 
 Solver::~Solver() {};
@@ -62,10 +55,23 @@ double Solver::get_d() const {
 ////////////////////////////////////////////////////////////////////////////////
 //secondary functions
 
-void Solver::calculate_d() {
-  d_new = (*lookup_table)[test_list[0]][test_list.back()];
+void Solver::init_d() {
+  double d;
+  d_opt = n_cities * (*lookup_table)[0][0];
+  for (int i = 0 ; i < n_cities; i++){
+    for (int j = i ; j < n_cities; j++) {
+      d = n_cities * (*lookup_table)[i][j];
+      if (d > d_opt){
+	d_opt = d;
+      };
+    };
+  };
+};
+
+void Solver::calculate_d(std::vector<int> *t_l, double *d) {
+  *d = (*lookup_table)[(*t_l)[0]][t_l->back()];
   for (int i = 0; i < n_cities-1 ; i++) {
-    d_new += (*lookup_table)[test_list[i]][test_list[i+1]];
+    *d += (*lookup_table)[(*t_l)[i]][(*t_l)[i+1]];
   };
 };
 
@@ -93,34 +99,46 @@ void Solver::load_vectors(std::vector<int> *source,
 ////////////////////////////////////////////////////////////////////////////////
 //primary optimiser
 void Solver::optimise() {
-  int i=0,j;
-  beta= kwargs->beta;
+  int i, j, k=0;
+  double global_d;
+  std::vector<int> internal_opt_list(test_list);
+  calculate_d(&test_list, &global_d);
   do {
-    j = 0;
+    i = 0;
+    beta= kwargs->beta;
+    std::random_shuffle(test_list.begin(), test_list.end());
+    load_vectors(&test_list, &internal_opt_list);
+    calculate_d(&test_list, &d_new);
+    d_opt = d_new;
     do {
-      swap_cities(2);
-      calculate_d();
-      if (d_new <= d_opt) {
-	load_vectors(&test_list, &(c_dat->city_ids));
-	d_opt = d_new;
-      }
-      else if ( log ( qa_dist(gen)) <= (- beta * (d_new - d_opt) ) ){
-      	d_opt = d_new;
-      }
-      else{
-      	load_vectors(&(c_dat->city_ids) ,&test_list);
-      };
-      ++j;}
-    while (j < kwargs->n_inner);
-    beta *= kwargs->beta_x;
-    ++i;
-    load_vectors(&(c_dat->city_ids) ,&test_list);
-    calculate_d();
+      j = 0;
+      do {
+	swap_cities(2);
+	calculate_d(&test_list, &d_new);
+	if (d_new <= d_opt) {
+	  load_vectors(&test_list, &internal_opt_list);
+	  d_opt = d_new;
+	}
+	else if ( log ( qa_dist(gen)) >= (- beta * (d_new - d_opt) ) ){
+	  load_vectors(&internal_opt_list ,&test_list);
+	};
+	j++;
+	;}
+      while (j < kwargs->n_inner);
+      beta *= kwargs->beta_x;
+      ++i;
+      load_vectors(&internal_opt_list ,&test_list);
+      calculate_d(&test_list, &d_new);
+    }
+    while (i < kwargs->n_outer);
+    k++;
+    calculate_d(&internal_opt_list, &d_opt);
+    if (d_opt < global_d){
+      load_vectors(&internal_opt_list , &(c_dat->city_ids));
+      calculate_d(&internal_opt_list, &global_d);
+      //std::cout<< "New best d: "<< global_d << "\n";
+    };
   }
-  while (i < kwargs->n_outer);
-  for (uint i = 0 ; i < (c_dat->city_ids).size(); i++){
-    std::cout<< (c_dat->city_ids)[i]<<"\n";};
-  std::cout<< c_dat<<"\n";
-  std::cout<<"\n";
-  
-}; 
+  while (k < kwargs->n_runs);
+  d_opt = global_d;
+};

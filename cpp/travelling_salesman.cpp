@@ -3,7 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
-//#include <chrono>
+#include <chrono>
 #include "tsp_structs.h"
 #include "city.h"
 #include "solver.h"
@@ -55,7 +55,6 @@ LUTab gen_lookup_table(City_Data* city_data) {
   
   float dr;
   std::array<City,2> c;
-  
   for ( int i = 0; i < n_cities; i++) {
     lookup_table[i][i] = 0;
     c[0] = (*city_data).cities[i];
@@ -79,19 +78,12 @@ int main(){
   Kwargs kwargs;
   kwargs.beta = 0.01;
   kwargs.beta_x = 1.5;
-  kwargs.n_outer = 50;
-  kwargs.n_inner = 20000;
+  kwargs.n_runs = 90;
+  kwargs.n_outer = 10;
+  kwargs.n_inner = 5000;
   Solver solver(&c_d, &l_t, &kwargs);
   solver.set_rng_seed(rdtsc());
   solver.optimise();
   std::cout<< solver.get_d() <<"\n";
-  std::cout<< &c_d<<"\n";
-  for (uint i = 0 ; i < c_d.city_ids.size(); i++){
-    std::cout << c_d.city_ids[i]<<"\n";
-  //  for (int j = 0 ; j < n_cities; j++){
-  //    std::cout << l_t[i][j]<< " ";
-  //  };
-  //  std::cout<<"\n";
-  };
   return 0;
 }

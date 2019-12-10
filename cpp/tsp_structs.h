@@ -20,7 +20,8 @@ struct Point{
 struct Kwargs{
   double beta;
   double beta_x;
-  long int n_outer;
-  long int n_inner;
+  int n_outer;
+  int n_inner;
+  int n_runs;
 };
 #endif

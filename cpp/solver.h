@@ -16,7 +16,8 @@ class Solver {
   void optimise();
   void swap_cities(const int);
   void load_vectors(std::vector<int>* , std::vector<int>*);
-  void calculate_d();
+  void init_d();
+  void calculate_d(std::vector<int>*, double*);
   //setters
   void set_rng_seed(const int);
   //getters
